@@ -43,7 +43,10 @@
   }
 
   onMount(() => {
-    void tick().then(reposition);
+    void tick().then(() => {
+      reposition();
+      menu?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus({ preventScroll: true });
+    });
     const outside = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!menu?.contains(target) && !anchor.contains(target)) onclose(false);

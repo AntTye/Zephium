@@ -143,7 +143,7 @@ function markdownSlice(schema: Schema, text: string): Slice | null {
 }
 
 /** A copied selection as Markdown, for anything that takes plain text. */
-function markdownOf(schema: Schema, slice: Slice): string {
+export function markdownOf(schema: Schema, slice: Slice): string {
   let content = slice.content;
   if (content.firstChild?.isInline)
     content = Fragment.from(schema.nodes.paragraph!.create(null, content));

@@ -1,11 +1,14 @@
 <script lang="ts">
   import type { NoteSession } from "$domain/notes";
+  import { loadNoteAsk } from "$features/assist";
+  import SparklesIcon from "@hugeicons/core-free-icons/SparklesIcon";
   import { commands } from "$shared/ipc/bindings";
   import LazyView from "$shared/ui/LazyView";
   import Icon from "$shared/ui/Icon";
   import { Alert02Icon, Note01Icon } from "@hugeicons/core-free-icons";
   import * as m from "$shared/i18n/messages";
   import { revealLabel } from "../lib/platform";
+  import { preferences } from "$domain/preferences";
 
   let {
     session,
@@ -14,9 +17,23 @@
   }: { session: NoteSession; density: "panel" | "page"; autofocus?: boolean } = $props();
 
   const loadEditor = () => import("./editor/NoteEditor.svelte");
+  let context = $state.raw<{ text: string; selection: boolean } | null>(null);
+  let askButton = $state<HTMLButtonElement>();
+  let readSelection = $state<() => string | null>();
 
   let note = $derived(session.note);
   let blocked = $derived(session.openError === "too_large" || session.openError === "unavailable");
+  let canAsk = $derived(!note?.trashed && preferences.aiEnabled());
+
+  function openAsk() {
+    const selected = readSelection?.();
+    context = { text: selected ?? session.markdown, selection: selected != null };
+  }
+
+  function closeAsk() {
+    context = null;
+    askButton?.focus();
+  }
 
   function openLink(href: string) {
     if (/^(?:https?|mailto):/iu.test(href)) void commands.browserOpenUrl(href, true);
@@ -99,6 +116,35 @@
           >{/if}
       </div>
     {:else}
+      {#if canAsk}
+        <button
+          type="button"
+          class="ask-button banner-button"
+          bind:this={askButton}
+          aria-expanded={!!context}
+          onclick={() => (context ? closeAsk() : openAsk())}
+        >
+          <Icon icon={SparklesIcon} size={15} />{m.panel_ask_zephium()}
+        </button>
+        {#if context}
+          {@const snapshot = context}
+          {#key context}
+            <LazyView
+              loader={loadNoteAsk}
+              loadingLabel={m.surface_loading()}
+              failureLabel={m.surface_render_failed()}
+              retryLabel={m.surface_retry()}
+            >
+              {#snippet children(Ask)}<Ask
+                  profile={session.profile}
+                  text={snapshot.text}
+                  selection={snapshot.selection}
+                  onclose={closeAsk}
+                />{/snippet}
+            </LazyView>
+          {/key}
+        {/if}
+      {/if}
       <LazyView
         loader={loadEditor}
         loadingLabel=""
@@ -111,6 +157,8 @@
               autofocus={autofocus && note.id === null}
               linksRevision={session.linksRevision}
               onchange={(read) => session.edit(read)}
+              bind:readSelection
+              onask={canAsk ? openAsk : undefined}
               onleave={() => void session.settle()}
               onopenlink={openLink}
               onopennote={(target) => void openNote(target)}
@@ -139,6 +187,14 @@
 {/if}
 
 <style>
+  .ask-button {
+    display: inline-flex;
+    align-self: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-block-end: 8px;
+  }
+
   .note-view {
     display: flex;
     flex: 1 0 auto;

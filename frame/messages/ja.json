@@ -1432,6 +1432,7 @@
   "note_check": "チェック済み",
   "note_markdown_kept": "Markdownとして保持",
   "note_document": "メモ",
+  "note_ask_too_large": "一度に送信できる文字数を超えています。短い範囲を選択して質問してください。",
   "note_reveal_explorer": "エクスプローラーで表示",
   "note_reveal_folder_generic": "フォルダで表示",
   "note_from_page": "ページから新規メモ",

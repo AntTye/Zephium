@@ -1432,6 +1432,7 @@
   "note_check": "체크됨",
   "note_markdown_kept": "Markdown으로 보관됨",
   "note_document": "메모",
+  "note_ask_too_large": "한 번에 보내기에는 텍스트가 너무 깁니다. 더 짧은 구절을 선택한 후 질문하세요.",
   "note_reveal_explorer": "파일 탐색기에서 보기",
   "note_reveal_folder_generic": "폴더에서 보기",
   "note_from_page": "페이지에서 새 메모",

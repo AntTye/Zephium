@@ -1432,6 +1432,7 @@
   "note_check": "Cochée",
   "note_markdown_kept": "Conservée en Markdown",
   "note_document": "Note",
+  "note_ask_too_large": "Ce texte est trop long pour un seul envoi. Sélectionnez un passage plus court et posez votre question à son sujet.",
   "note_reveal_explorer": "Afficher dans l'Explorateur de fichiers",
   "note_reveal_folder_generic": "Afficher dans le dossier",
   "note_from_page": "Nouvelle note depuis la page",

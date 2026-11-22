@@ -1432,6 +1432,7 @@
   "note_check": "Marcada",
   "note_markdown_kept": "Conservado como Markdown",
   "note_document": "Nota",
+  "note_ask_too_large": "El texto es demasiado largo para enviarlo de una vez. Selecciona un fragmento más corto y pregunta sobre él.",
   "note_reveal_explorer": "Mostrar en el Explorador de archivos",
   "note_reveal_folder_generic": "Mostrar en la carpeta",
   "note_from_page": "Nueva nota desde la página",

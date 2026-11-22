@@ -6,6 +6,7 @@
 
 mod agent;
 mod fault;
+pub mod note;
 pub mod port;
 pub use zephium_page_assist as core;
 mod readout;

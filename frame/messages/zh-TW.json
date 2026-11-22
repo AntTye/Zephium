@@ -1432,6 +1432,7 @@
   "note_check": "已勾選",
   "note_markdown_kept": "保留為 Markdown",
   "note_document": "備忘錄",
+  "note_ask_too_large": "文字太長，無法一次傳送。請選取較短的段落，再針對該段落提問。",
   "note_reveal_explorer": "在檔案總管中顯示",
   "note_reveal_folder_generic": "在資料夾中顯示",
   "note_from_page": "從網頁新增備忘錄",

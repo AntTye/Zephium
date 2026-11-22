@@ -1432,6 +1432,7 @@
   "note_check": "Abgehakt",
   "note_markdown_kept": "Als Markdown belassen",
   "note_document": "Notiz",
+  "note_ask_too_large": "Der Text ist zu lang, um ihn auf einmal zu senden. Markiere einen kürzeren Abschnitt und stelle dazu deine Frage.",
   "note_reveal_explorer": "Im Explorer anzeigen",
   "note_reveal_folder_generic": "Im Ordner anzeigen",
   "note_from_page": "Neue Notiz aus Seite",

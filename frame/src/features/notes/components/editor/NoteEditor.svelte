@@ -6,7 +6,7 @@
   import * as m from "$shared/i18n/messages";
   import { MarkdownDocument } from "../../lib/markdown/document";
   import { noteSchemaExtensions } from "../../lib/markdown/schema";
-  import { behaviour, triggerKey, type Trigger } from "../../lib/editor/behaviour";
+  import { behaviour, markdownOf, triggerKey, type Trigger } from "../../lib/editor/behaviour";
   import { applyBlock, commandsFor } from "../../lib/editor/blocks";
   import { nodeViews, wikiTargets } from "../../lib/editor/views";
   import FormatBar from "./FormatBar.svelte";
@@ -20,6 +20,8 @@
     autofocus = false,
     linksRevision = 0,
     onchange,
+    onask,
+    readSelection = $bindable(),
     onleave,
     onopenlink,
     onopennote,
@@ -35,6 +37,8 @@
     linksRevision?: number;
     /** The text changed; `read` gives it as Markdown when it is wanted. */
     onchange: (read: NoteReader) => void;
+    onask?: () => void;
+    readSelection?: () => string | null;
     /** Focus left the note's text for somewhere outside the editor. */
     onleave?: () => void;
     onopenlink: (href: string) => void;
@@ -58,7 +62,12 @@
     if (!editor || !editable || selecting || trigger) return false;
     const { selection } = editor.state;
     if (linking) return true;
-    return focused && !selection.empty && !editor.isActive("codeBlock") && !("node" in selection);
+    return (
+      focused &&
+      !selection.empty &&
+      (!editor.isActive("codeBlock") || !!onask) &&
+      !("node" in selection)
+    );
   });
 
   /** Replaces the trigger's text with what was chosen. */
@@ -245,6 +254,10 @@
       );
     if (autofocus) instance.commands.focus("end");
     editor = instance;
+    readSelection = () => {
+      const { selection } = instance.state;
+      return selection.empty ? null : markdownOf(instance.schema, selection.content());
+    };
     markLinks();
     // The bar waits for a drag-selection to finish rather than chase it.
     const press = (event: PointerEvent) => {
@@ -258,6 +271,7 @@
       window.removeEventListener("pointerup", release);
       clearTimeout(linkTimer);
       instance.destroy();
+      readSelection = undefined;
       editor = null;
     };
   });
@@ -272,7 +286,7 @@
 </script>
 
 <div class="note-editor" data-density={density} data-editable={editable} bind:this={host}></div>
-{#if editor && showBar}<FormatBar {editor} {revision} bind:linking />{/if}
+{#if editor && showBar}<FormatBar {editor} {revision} bind:linking {onask} />{/if}
 {#if editor && trigger}<Suggestions
     {editor}
     at={trigger.from}

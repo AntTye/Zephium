@@ -71,7 +71,18 @@ export const architecture = {
             from: { element: { type: "features", captured: { module: "settings" } } },
             allow: { to: { element: { type: "features", captured: { module: "assist" } } } },
           },
-          // The sidebar assistant's composer borrows Work's model chip and dictation.
+          // An open note can host the assistant's note composer.
+          {
+            from: {
+              element: {
+                type: "features",
+                captured: { module: "notes" },
+                fileInternalPath: "components/NoteView.svelte",
+              },
+            },
+            allow: { to: { element: { type: "features", captured: { module: "assist" } } } },
+          },
+          // The assistant's composers borrow Work's model chip and dictation.
           {
             from: { element: { type: "features", captured: { module: "assist" } } },
             allow: { to: { element: { type: "features", captured: { module: "work" } } } },

@@ -1432,6 +1432,7 @@
   "note_check": "Відмічено",
   "note_markdown_kept": "Збережено як Markdown",
   "note_document": "Нотатка",
+  "note_ask_too_large": "Текст завеликий для одного запиту. Виділіть коротший уривок і поставте запитання про нього.",
   "note_reveal_explorer": "Показати в Провіднику файлів",
   "note_reveal_folder_generic": "Показати в папці",
   "note_from_page": "Нова нотатка зі сторінки",

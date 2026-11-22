@@ -1461,6 +1461,7 @@
   "note_check": "Checked",
   "note_markdown_kept": "Kept as Markdown",
   "note_document": "Note",
+  "note_ask_too_large": "This is too much text to send at once. Highlight a shorter passage and ask about that selection.",
   "note_reveal_explorer": "Show in File Explorer",
   "note_reveal_folder_generic": "Show in Folder",
   "note_from_page": "New Note from Page",

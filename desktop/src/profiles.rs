@@ -83,14 +83,16 @@ pub(crate) async fn profiles_get(
     if !admitted(&caller, "profiles_get") {
         return Ok(None);
     }
+    Ok(read(&shell).await)
+}
+
+pub(super) async fn read(shell: &Handle) -> Option<ProfilesView> {
     let receiver = shell.profiles();
-    Ok(
-        tokio::task::spawn_blocking(move || receiver.recv_timeout(Duration::from_secs(4)))
-            .await
-            .ok()
-            .and_then(Result::ok)
-            .flatten(),
-    )
+    tokio::task::spawn_blocking(move || receiver.recv_timeout(Duration::from_secs(4)))
+        .await
+        .ok()
+        .and_then(Result::ok)
+        .flatten()
 }
 
 #[tauri::command]

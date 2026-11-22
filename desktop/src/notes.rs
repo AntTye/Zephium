@@ -11,6 +11,7 @@ use zephium_core::ids::ProfileId;
 use zephium_core::notes::{NoteCall, NoteError, NoteReply, NoteResponse};
 use zephium_core::ports::store::Store;
 use zephium_core::resources::ResourceContent;
+use zephium_ipc::page_assist::PageAssistFaultV1 as AskFault;
 use zephium_notes::legacy::LegacyNote;
 use zephium_notes::{Host, NoteService};
 use zephium_store::SqliteStore;
@@ -22,6 +23,64 @@ use crate::{
 /// A store answer the one-time import waits for. The notes thread is the
 /// only waiter, and a slow store only postpones the import to a later open.
 const STORE_WAIT: Duration = Duration::from_secs(10);
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn note_ask(
+    caller: WebviewWindow,
+    app: tauri::AppHandle,
+    expected_profile: String,
+    question: String,
+    context: String,
+) -> Result<String, AskFault> {
+    if !authorize(&caller, CallerPolicy::Main, "note_ask") || shutdown_started(&app) {
+        return Err(AskFault::Unavailable);
+    }
+    #[cfg(feature = "work-product")]
+    {
+        static ADMISSION: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(4);
+        let _permit = ADMISSION.try_acquire().map_err(|_| AskFault::Busy)?;
+        let profile = ProfileId::parse(&expected_profile).ok_or(AskFault::Invalid)?;
+        let confirm = || async {
+            let roster = crate::profiles::read(app.state::<Handle>().inner())
+                .await
+                .ok_or(AskFault::Unavailable)?;
+            if roster.private {
+                return Err(AskFault::Private);
+            }
+            if shutdown_started(&app)
+                || roster.current.as_ref() != Some(&expected_profile)
+                || !roster
+                    .profiles
+                    .iter()
+                    .any(|entry| entry.id == expected_profile)
+            {
+                return Err(AskFault::Unavailable);
+            }
+            if !app
+                .try_state::<crate::keymap::Keymap>()
+                .is_some_and(|keys| keys.ai_enabled())
+            {
+                return Err(AskFault::AiOff);
+            }
+            Ok(())
+        };
+        confirm().await?;
+        let answer = tokio::time::timeout(
+            Duration::from_secs(120),
+            zephium_work_composition::page_assist::note::ask(profile, question, context, confirm()),
+        )
+        .await
+        .map_err(|_| AskFault::TimedOut)??;
+        confirm().await?;
+        Ok(answer)
+    }
+    #[cfg(not(feature = "work-product"))]
+    {
+        let _ = (expected_profile, question, context);
+        Err(AskFault::Unavailable)
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, specta::Type, Event)]
 pub(crate) struct NotesChanged(zephium_core::notes::NoteChanges);

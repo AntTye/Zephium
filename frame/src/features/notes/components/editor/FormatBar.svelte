@@ -10,6 +10,7 @@
     Tick02Icon,
   } from "@hugeicons/core-free-icons";
   import Unlink02Icon from "@hugeicons/core-free-icons/Unlink02Icon";
+  import SparklesIcon from "@hugeicons/core-free-icons/SparklesIcon";
   import * as m from "$shared/i18n/messages";
   import { BLOCKS, activeBlock } from "../../lib/editor/blocks";
   import { toggleChecklist } from "../../lib/editor/behaviour";
@@ -22,7 +23,8 @@
     editor,
     revision,
     linking = $bindable(false),
-  }: { editor: Editor; revision: number; linking?: boolean } = $props();
+    onask,
+  }: { editor: Editor; revision: number; linking?: boolean; onask?: () => void } = $props();
 
   const HEIGHT = 38;
 
@@ -40,6 +42,7 @@
     return {
       marks: Object.fromEntries(MARKS.map((mark) => [mark.id, markActive(editor, mark.id)])),
       link: editor.isActive("link"),
+      codeBlock: editor.isActive("codeBlock"),
       checklist:
         editor.isActive("listItem", { checked: false }) ||
         editor.isActive("listItem", { checked: true }),
@@ -181,49 +184,61 @@
       >
     </form>
   {:else}
-    <button
-      bind:this={styleButton}
-      type="button"
-      class="format-style"
-      class:compact
-      aria-haspopup="menu"
-      aria-expanded={styles}
-      aria-label={compact ? `${m.note_formatting()}: ${active.block.label()}` : undefined}
-      title={compact ? active.block.label() : undefined}
-      onclick={() => (styles = !styles)}
-    >
-      {#if compact}<Icon icon={active.block.icon} size={15} />{:else}<span
-          >{active.block.label()}</span
-        >{/if}<Icon icon={ArrowDown01Icon} size={12} /></button
-    >
-    <span class="format-rule" aria-hidden="true"></span>
-    {#each MARKS as mark (mark.id)}
+    {#if !active.codeBlock}
+      <button
+        bind:this={styleButton}
+        type="button"
+        class="format-style"
+        class:compact
+        aria-haspopup="menu"
+        aria-expanded={styles}
+        aria-label={compact ? `${m.note_formatting()}: ${active.block.label()}` : undefined}
+        title={compact ? active.block.label() : undefined}
+        onclick={() => (styles = !styles)}
+      >
+        {#if compact}<Icon icon={active.block.icon} size={15} />{:else}<span
+            >{active.block.label()}</span
+          >{/if}<Icon icon={ArrowDown01Icon} size={12} /></button
+      >
+      <span class="format-rule" aria-hidden="true"></span>
+      {#each MARKS as mark (mark.id)}
+        <button
+          type="button"
+          class="format-button"
+          aria-label={mark.label()}
+          title="{mark.label()}  {mark.hint}"
+          aria-pressed={active.marks[mark.id]}
+          onclick={() => mark.toggle(editor)}><Icon icon={mark.icon} size={15} /></button
+        >
+      {/each}
+      <span class="format-rule" aria-hidden="true"></span>
       <button
         type="button"
         class="format-button"
-        aria-label={mark.label()}
-        title="{mark.label()}  {mark.hint}"
-        aria-pressed={active.marks[mark.id]}
-        onclick={() => mark.toggle(editor)}><Icon icon={mark.icon} size={15} /></button
+        aria-label={m.note_link()}
+        title="{m.note_link()}  {shortcutHint('CmdOrCtrl+K')}"
+        aria-pressed={active.link}
+        onclick={() => (linking = true)}><Icon icon={Link01Icon} size={15} /></button
       >
-    {/each}
-    <span class="format-rule" aria-hidden="true"></span>
-    <button
-      type="button"
-      class="format-button"
-      aria-label={m.note_link()}
-      title="{m.note_link()}  {shortcutHint('CmdOrCtrl+K')}"
-      aria-pressed={active.link}
-      onclick={() => (linking = true)}><Icon icon={Link01Icon} size={15} /></button
-    >
-    <button
-      type="button"
-      class="format-button"
-      aria-label={m.note_checklist()}
-      title="{m.note_checklist()}  {shortcutHint('CmdOrCtrl+Shift+L')}"
-      aria-pressed={active.checklist}
-      onclick={() => toggleChecklist(editor)}><Icon icon={CheckListIcon} size={15} /></button
-    >
+      <button
+        type="button"
+        class="format-button"
+        aria-label={m.note_checklist()}
+        title="{m.note_checklist()}  {shortcutHint('CmdOrCtrl+Shift+L')}"
+        aria-pressed={active.checklist}
+        onclick={() => toggleChecklist(editor)}><Icon icon={CheckListIcon} size={15} /></button
+      >
+    {/if}
+    {#if onask}
+      <button
+        type="button"
+        class={room < 480 ? "format-button" : "format-style"}
+        aria-label={m.panel_ask_zephium()}
+        title={m.panel_ask_zephium()}
+        onclick={onask}
+        ><Icon icon={SparklesIcon} size={15} />{#if room >= 480}{m.panel_ask_zephium()}{/if}</button
+      >
+    {/if}
   {/if}
 </div>
 {#if styles && styleButton && !linking}<BlockMenu
@@ -231,7 +246,10 @@
     {revision}
     anchor={styleButton}
     prefer={position?.side === "below" ? "below" : "above"}
-    onclose={() => (styles = false)}
+    onclose={(refocus) => {
+      styles = false;
+      if (refocus) editor.commands.focus();
+    }}
   />{/if}
 
 <style>

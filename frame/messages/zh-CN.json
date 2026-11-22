@@ -1432,6 +1432,7 @@
   "note_check": "已勾选",
   "note_markdown_kept": "保留为 Markdown",
   "note_document": "备忘录",
+  "note_ask_too_large": "文本太长，无法一次发送。请选择较短的段落并针对该段落提问。",
   "note_reveal_explorer": "在文件资源管理器中显示",
   "note_reveal_folder_generic": "在文件夹中显示",
   "note_from_page": "从页面新建备忘录",

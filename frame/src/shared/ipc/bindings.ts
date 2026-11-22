@@ -570,6 +570,7 @@ export const commands = {
 	tabDragOver: (x: number | null, y: number | null) => __TAURI_INVOKE<void>("tab_drag_over", { x, y }),
 	resourceCall: (expectedProfile: string, call: ResourceCall_Deserialize) => __TAURI_INVOKE<ResourceReply_Serialize>("resource_call", { expectedProfile, call }),
 	noteCall: (expectedProfile: string, call: NoteCall) => __TAURI_INVOKE<NoteReply>("note_call", { expectedProfile, call }),
+	noteAsk: (expectedProfile: string, question: string, context: string) => typedError<string, PageAssistFaultV1>(__TAURI_INVOKE("note_ask", { expectedProfile, question, context })),
 	historyCall: (expectedProfile: string, call: HistoryCall) => __TAURI_INVOKE<HistoryResponse>("history_call", { expectedProfile, call }),
 	/**
 	 *  Clears what the focused profile's pages stored, or lists and removes it

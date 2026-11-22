@@ -1432,6 +1432,7 @@
   "note_check": "İşaretli",
   "note_markdown_kept": "Markdown olarak tutuldu",
   "note_document": "Not",
+  "note_ask_too_large": "Metin tek seferde gönderilemeyecek kadar uzun. Daha kısa bir bölüm seçip sorunuzu o bölüm hakkında sorun.",
   "note_reveal_explorer": "Dosya Gezgini'nde göster",
   "note_reveal_folder_generic": "Klasörde göster",
   "note_from_page": "Sayfadan Yeni Not",

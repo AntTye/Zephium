@@ -11,12 +11,22 @@ import PageHost from "./PageHost.svelte";
 
 const native = vi.hoisted(() => ({
   call: vi.fn(),
+  ask: vi.fn(),
   open: vi.fn(),
   profile: "01J9ZQ3V6Q4M8Y2K7T5R1N0C00",
 }));
 vi.mock("$shared/ipc/bindings", async () => {
   const { mockBindings } = await import("$shared/testing/bindings");
-  return mockBindings({ noteCall: native.call, browserOpenUrl: native.open });
+  const { models } = await import("$shared/testing/work-models");
+  const { accountFixture } = await import("$shared/testing/account");
+  return mockBindings({
+    noteCall: native.call,
+    noteAsk: native.ask,
+    browserOpenUrl: native.open,
+    workModels: async (profile) => ({ ...models({}), profile }),
+    accountGet: async () => ({ account: accountFixture(), fault: null, retry_after: null }),
+    settingGet: async () => null,
+  });
 });
 const style = document.createElement("style");
 style.textContent = primitives + tokens.replace("@theme static", ":root") + browserCSS;
@@ -27,6 +37,62 @@ afterEach(() => {
 
 const shot = (name: string) =>
   page.screenshot({ path: `../../../../../target/notes-qa/${name}.png` });
+
+test("asking about a selection sends only its Markdown and keeps the answer outside the note", async () => {
+  await page.viewport(1200, 800);
+  const { screen } = await setup();
+  native.ask.mockReset().mockResolvedValue({ status: "ok", data: "Review the blockers." });
+  await screen.getByRole("option", { name: /^Weekly review/u }).click();
+  const editor = screen.getByRole("textbox", { name: "Note" });
+  const line = "What moved, what stalled, what to drop.";
+  await editor.getByText(line).click();
+  await userEvent.keyboard("{End}{Shift>}{Home}{/Shift}");
+  await page
+    .getByRole("toolbar", { name: "Formatting" })
+    .getByRole("button", { name: "Ask Zephium" })
+    .click();
+  const form = screen.getByRole("form", { name: "Ask Zephium" });
+  await expect.element(form.getByRole("textbox")).toHaveFocus();
+  expect(native.ask).not.toHaveBeenCalled();
+  await form.getByRole("textbox").fill("What should I do?");
+  await userEvent.keyboard("{Enter}");
+  await expect.element(form.getByText("Review the blockers.")).toBeVisible();
+  expect(native.ask).toHaveBeenCalledExactlyOnceWith(native.profile, "What should I do?", line);
+  expect(editor.element().textContent).not.toContain("Review the blockers.");
+  await shot("page-ask-selection");
+});
+
+test("a whole-note question includes recent edits, can retry a refusal, and stays with its note", async () => {
+  await page.viewport(1200, 800);
+  const { screen } = await setup();
+  let finish!: (reply: { status: "ok"; data: string }) => void;
+  const late = new Promise<{ status: "ok"; data: string }>((resolve) => (finish = resolve));
+  native.ask
+    .mockReset()
+    .mockResolvedValueOnce({ status: "error", error: { reason: "no_model" } })
+    .mockReturnValueOnce(late);
+  await screen.getByRole("option", { name: /^Weekly review/u }).click();
+  const editor = screen.getByRole("textbox", { name: "Note" });
+  await editor.getByText("What moved, what stalled, what to drop.").click();
+  await userEvent.keyboard("{End} Updated.");
+  await screen.getByRole("button", { name: "Ask Zephium" }).click();
+  const form = screen.getByRole("form", { name: "Ask Zephium" });
+  await form.getByRole("textbox").fill("Summarize");
+  await form.getByRole("button", { name: "Send" }).click();
+  await expect.element(form.getByRole("alert")).toBeVisible();
+  expect(native.ask).toHaveBeenCalledExactlyOnceWith(
+    native.profile,
+    "Summarize",
+    "# Weekly review\n\nWhat moved, what stalled, what to drop. Updated.\n",
+  );
+  await form.getByRole("button", { name: "Send" }).click();
+  await expect.element(form.getByRole("button", { name: "Send" })).toBeDisabled();
+  await screen.getByRole("option", { name: /^Packing list/u }).click();
+  finish({ status: "ok", data: "Old reply" });
+  await expect.element(editor.getByText("Passport")).toBeVisible();
+  await expect.element(form).not.toBeInTheDocument();
+  await expect.element(screen.getByText("Old reply")).not.toBeInTheDocument();
+});
 
 const DAY = 24 * 60 * 60 * 1000;
 

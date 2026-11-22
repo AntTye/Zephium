@@ -2197,6 +2197,7 @@ fn specta_builder() -> tauri_specta::Builder<tauri::Wry> {
             tab_drag_over,
             resource_call,
             notes::note_call,
+            notes::note_ask,
             history_call,
             browsing_data_call,
             favicon_probe,
